@@ -123,6 +123,8 @@ def get_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+
+
 @app.get("/api/users/{user_id}/posts", response_model=list[PostResponse])
 def get_user_posts(user_id: int, db: Annotated[Session, Depends(get_db)]):
     result = db.execute(select(models.User).where(models.User.id == user_id))
@@ -174,6 +176,14 @@ def get_posts(db: Annotated[Session, Depends(get_db)]):
     posts = result.scalars().all()
     return posts
 
+@app.get("/api/posts/{post_id}", response_model=PostResponse)
+def get_post(post_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = result.scalars().first()
+    if post:
+        return post
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
 @app.put("/api/posts/{post_id}", response_model=PostResponse)
 def update_post_full(
     post_id: int,
@@ -202,6 +212,24 @@ def update_post_full(
     post.content = post_data.content
     post.user_id = post_data.user_id
 
+    db.commit()
+    db.refresh(post)
+    return post
+
+@app.patch("/api/posts/{post_id}", response_model=PostResponse)
+def update_post_partial(
+    post_id: int,
+    post_data: PostUpdate,
+    db: Annotated[Session, Depends(get_db)],
+):
+    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = result.scalars().first()
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+
+    update_data = post_data.model_dump(exclude_unset=True)
     db.commit()
     db.refresh(post)
     return post
