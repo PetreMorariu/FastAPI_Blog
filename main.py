@@ -237,7 +237,7 @@ def update_post_partial(
     db.refresh(post)
     return post
 
-@app.delete("/api/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT
+@app.delete("/api/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(post_id: int, db: Annotated[Session, Depends(get_db)]):
     result = db.execute(select(models.Post).where(models.Post.id == post_id))
     post = result.scalars().first()
