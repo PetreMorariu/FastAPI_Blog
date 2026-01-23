@@ -230,6 +230,9 @@ def update_post_partial(
         )
 
     update_data = post_data.model_dump(exclude_unset=True)
+    for filed, value in update_data.items():
+        setattr(post, filed, value)
+
     db.commit()
     db.refresh(post)
     return post
