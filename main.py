@@ -6,16 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from watchfiles import awatch
 
-from schemas import (
-    PostCreate,
-    PostResponse,
-    UserCreate,
-    UserResponse,
-    PostUpdate,
-    UserUpdate,
-)
+
 from database import Base, engine, get_db
 
 from typing import Annotated
@@ -24,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import  models
+from routers import posts,users
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -95,24 +88,6 @@ async def user_posts_page(
         "user_posts.html",
         {"posts": posts, "user": user, "title": f"{user.username}'s Posts"},
     )
-
-
-@app.get("/api/users/{user_id}", response_model=UserResponse)
-async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
-    result = await db.execute(select(models.User).where(models.User.id == user_id))
-    user = result.scalars().first()
-    if user:
-        return user
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-
-
-
-
-
-
-
-
 
 @app.exception_handler(StarletteHTTPException)
 async def general_http_exception_handler(request: Request, exception: StarletteHTTPException):
